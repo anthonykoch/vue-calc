@@ -1,0 +1,42 @@
+{
+  "name": "calculator",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/calculator.umd.js",
+  "module": "dist/calculator.esm.js",
+  "unpkg": "dist/calculator.min.js",
+  "browser": {
+    "./sfc": "src/calculator.vue"
+  },
+  "scripts": {
+    "dev": "vue serve src/calculator.vue",
+    "build": "npm run build:umd & npm run build:es & npm run build:unpkg",
+    "build:umd": "rollup --config build/rollup.config.js --format umd --file dist/calculator.umd.js",
+    "build:es": "rollup --config build/rollup.config.js --format es --file dist/calculator.esm.js",
+    "build:unpkg": "rollup --config build/rollup.config.js --format iife --file dist/calculator.min.js",
+    "test:unit": "vue-cli-service test:unit"
+  },
+  "dependencies": {
+    "@vue/cli-service": "^4.1.2",
+    "core-js": "^3.4.4",
+    "mathjs": "^6.3.0",
+    "vue": "^2.6.10"
+  },
+  "devDependencies": {
+    "rollup": "^1.17.0",
+    "rollup-plugin-buble": "^0.19.8",
+    "rollup-plugin-commonjs": "^10.0.1",
+    "rollup-plugin-vue": "^5.0.1",
+    "vue": "^2.6.10",
+    "vue-template-compiler": "^2.6.10"
+  },
+  "gitHooks": {
+    "pre-commit": "lint-staged"
+  },
+  "lint-staged": {
+    "*.{js,vue}": [
+      "vue-cli-service lint",
+      "git add"
+    ]
+  }
+}

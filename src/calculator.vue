@@ -1,0 +1,879 @@
+<template>
+  <div>
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
+    <div class="Calculator">
+      <header class="Calculator-header">
+        <div class="Calculator-expressions">
+          <span class="Calculator-expressionsOverflow"></span
+          ><span class="Calculator-expressionsList">{{ expressionList }}</span>
+        </div>
+        <div class="Calculator-operands">
+          <span
+            class="Calculator-currentOperand"
+            :class="{ 'has-error': error }"
+            :style="{
+              'font-size': font.size,
+              'font-weight': font.weight
+            }"
+          >
+            <span v-if="error">Error</span>
+            <span v-else-if="mode & MODE_SHOW_TOTAL">{{ total }}</span>
+            <span v-else>{{ currentOperand }}</span>
+          </span>
+        </div>
+      </header>
+      <div class="Calculator-body">
+        <div class="Calculator-buttonsContainer">
+          <button
+            v-for="button in buttons"
+            class="Calculator-button"
+            :key="button.id"
+            :class="button.className"
+            @click="exec(button.action, button.args)"
+          >
+            <span
+              :class="button.icon ? button.icon : ''"
+              v-if="button.children == null"
+              v-text="button.text"
+            />
+          </button>
+        </div>
+      </div>
+      <button
+        title="equals"
+        class="Calculator-equals"
+        @click="showTotal({ explicit: true })"
+      >
+        <div class="Calculator-equalsLine"></div>
+        <div class="Calculator-equalsLine"></div>
+      </button>
+    </div>
+  </div>
+</template>
+
+<script>
+import evalmath, { isOperator } from './math'
+
+const ACTION_CLEAR = 'clear'
+const ACTION_CLEAR_ENTRY = 'clearEntry'
+const ACTION_NEGATE = 'negate'
+const ACTION_UPDATE_OPERATOR = 'updateOperator'
+const ACTION_APPEND_OPERAND = 'appendOperand'
+const ACTION_ADD_PAREN = 'addParen'
+const ACTION_BACKSPACE = 'backspace'
+const ACTION_SHOW_TOTAL = 'showTotal'
+
+const buttons = [
+  {
+    id: 1,
+    text: 'C',
+    className: 'is-clear',
+    action: ACTION_CLEAR
+  },
+  {
+    id: 2,
+    text: '+/-',
+    className: 'is-negation',
+    action: ACTION_NEGATE
+  },
+  {
+    id: 3,
+    text: '%',
+    className: 'is-modulo',
+    action: ACTION_UPDATE_OPERATOR,
+    args: {
+      operator: '%'
+    }
+  },
+  {
+    id: 4,
+    text: '√',
+    className: 'is-square',
+    action: ACTION_UPDATE_OPERATOR,
+    args: {
+      operator: '√'
+    }
+  },
+
+  {
+    id: 5,
+    text: '7',
+    action: ACTION_APPEND_OPERAND,
+    args: {
+      value: '7'
+    }
+  },
+  {
+    id: 6,
+    text: '8',
+    action: ACTION_APPEND_OPERAND,
+    args: {
+      value: '8'
+    }
+  },
+  {
+    id: 7,
+    text: '9',
+    action: ACTION_APPEND_OPERAND,
+    args: {
+      value: '9'
+    }
+  },
+  {
+    id: 8,
+    text: '/',
+    className: 'is-division',
+    action: ACTION_UPDATE_OPERATOR,
+    args: {
+      operator: '/'
+    }
+  },
+
+  {
+    id: 9,
+    text: '4',
+    action: ACTION_APPEND_OPERAND,
+    args: {
+      value: '4'
+    }
+  },
+  {
+    id: 10,
+    text: '5',
+    action: ACTION_APPEND_OPERAND,
+    args: {
+      value: '5'
+    }
+  },
+  {
+    id: 11,
+    text: '6',
+    action: ACTION_APPEND_OPERAND,
+    args: {
+      value: '6'
+    }
+  },
+  {
+    id: 12,
+    text: '',
+    className: 'is-multiplication',
+    icon: 'ion-ios-close-empty',
+    action: ACTION_UPDATE_OPERATOR,
+    args: {
+      operator: '*'
+    }
+  },
+
+  {
+    id: 13,
+    text: '1',
+    action: ACTION_APPEND_OPERAND,
+    args: {
+      value: '1'
+    }
+  },
+  {
+    id: 14,
+    text: '2',
+    action: ACTION_APPEND_OPERAND,
+    args: {
+      value: '2'
+    }
+  },
+  {
+    id: 15,
+    text: '3',
+    action: ACTION_APPEND_OPERAND,
+    args: {
+      value: '3'
+    }
+  },
+  {
+    id: 16,
+    text: '',
+    className: 'is-subtraction',
+    icon: 'ion-ios-minus-empty',
+    action: ACTION_UPDATE_OPERATOR,
+    args: {
+      operator: '-'
+    }
+  },
+
+  {
+    id: 17,
+    text: '0',
+    action: ACTION_APPEND_OPERAND,
+    args: {
+      value: '0'
+    }
+  },
+  {
+    id: 18,
+    text: '(',
+    className: ['is-paren', 'is-open-paren'],
+    action: ACTION_ADD_PAREN,
+    args: {
+      operator: '('
+    }
+  },
+  {
+    id: 19,
+    text: ')',
+    className: ['is-paren', 'is-close-paren'],
+    action: ACTION_ADD_PAREN,
+    args: {
+      operator: ')'
+    }
+  },
+
+  {
+    id: 20,
+    text: '.',
+    action: ACTION_APPEND_OPERAND,
+    args: {
+      value: '.'
+    }
+  },
+  {
+    id: 21,
+    text: '',
+    className: 'addition',
+    icon: 'ion-ios-plus-empty',
+    action: ACTION_UPDATE_OPERATOR,
+    args: {
+      operator: '+'
+    }
+  }
+]
+
+// Mode show total causes the total to be displayed in the current operand display
+const MODE_SHOW_TOTAL = 1 << 1
+// Mode insert operand causes the current operand to be overwritten. After the first character has been written, the mode should go to mode append operand
+const MODE_INSERT_OPERAND = 1 << 2
+// Mode append operand causes any operand parts to be appended to the current operand
+const MODE_APPEND_OPERAND = 1 << 3
+
+// The maximum number of digits the current operand may be
+const MAX_NUMBER_LENGTH = Number.MAX_SAFE_INTEGER.toString().length
+
+function isNumberPart(str) {
+  return /^[0-9.]/.test(str)
+}
+
+// Debug function for flags
+function getFlags(flags) {
+  let arr = []
+
+  if (flags & MODE_SHOW_TOTAL) {
+    arr.push('MODE_SHOW_TOTAL')
+  }
+  if (flags & MODE_INSERT_OPERAND) {
+    arr.push('MODE_INSERT_OPERAND')
+  }
+
+  if (flags & MODE_APPEND_OPERAND) {
+    arr.push('MODE_APPEND_OPERAND')
+  }
+
+  return arr.join('|')
+}
+
+export default {
+  data() {
+    return {
+      MODE_SHOW_TOTAL,
+      MODE_INSERT_OPERAND,
+      MODE_APPEND_OPERAND,
+      activeButtons: [],
+      buttons,
+      expressions: ['5', '+', '7', '-', '45', '+', '3', '+', '177', '-'],
+      currentOperand: '147',
+      currentOperator: '-',
+      mode: MODE_SHOW_TOTAL | MODE_INSERT_OPERAND,
+      openParenStack: 0,
+      error: null,
+      total: 147,
+      font: {
+        size: 14,
+        weight: 300
+      }
+    }
+  },
+  computed: {
+    expressionList() {
+      return this.expressions
+        .map((str, index, array) => {
+          const s = str.trim()
+
+          if (array[index - 1] === '(') {
+            return s
+          } else if (s === ')') {
+            return s
+          } else if (s[0] === '-' && isNumberPart(s[1])) {
+            return ' ' + str
+          } else {
+            return ' ' + s
+          }
+
+          return str
+        })
+        .join('')
+    }
+  },
+  methods: {
+    exec(action, args) {
+      console.log(action)
+
+      switch (action) {
+        case ACTION_CLEAR: {
+          this.clear(args)
+          break
+        }
+        case ACTION_NEGATE: {
+          this.negate(args)
+          break
+        }
+        case ACTION_UPDATE_OPERATOR: {
+          this.updateOperator(args)
+          break
+        }
+        case ACTION_APPEND_OPERAND: {
+          this.appendOperand(args)
+          break
+        }
+        case ACTION_ADD_PAREN: {
+          this.addParen(args)
+          break
+        }
+        default: {
+          console.error('action not found', action)
+        }
+      }
+
+      this.showTotal()
+    },
+    clear() {
+      this.expressions = []
+      this.currentOperand = '0'
+      this.currentOperator = ''
+      this.openParenStack = 0
+      this.mode = MODE_SHOW_TOTAL | MODE_INSERT_OPERAND
+      this.error = null
+      this.total = 0
+    },
+
+    backspace() {
+      let operand = this.currentOperand.slice(0, -1)
+
+      if (operand.length === 0) {
+        operand = '0'
+      }
+
+      this.currentOperand = operand
+    },
+
+    clearEntry() {
+      this.currentOperand = '0'
+    },
+
+    negate() {
+      // Only add negative sign if not zero
+      if (this.currentOperand !== 0) {
+        this.currentOperand = (-this.currentOperand).toString()
+      }
+      console.log(this.currentOperand)
+    },
+
+    updateOperator({ operator }) {
+      const length = this.expressions.length
+      const last = this.expressions[length - 1] || ''
+      const { mode, currentOperand } = this
+
+      if (mode & MODE_INSERT_OPERAND) {
+        console.log('MODE_INSERT_OPERAND')
+
+        if (length === 0) {
+          this.expressions.push(currentOperand, operator)
+        } else if (isOperator(last)) {
+          // console.log('isoplast');                            // APPEND_OP LOG
+          this.expressions.pop()
+          this.expressions.push(operator)
+        } else if (last === ')') {
+          // console.log('nope');                                // APPEND_OP LOG
+          this.expressions.push(operator)
+        } else if (last === '(') {
+          this.expressions.push(currentOperand, operator)
+        } else {
+          // console.log('else');                                // APPEND_OP LOG
+        }
+      } else if (mode & MODE_APPEND_OPERAND) {
+        console.log('MODE_APPEND_OPERAND')
+
+        if (length === 0) {
+          console.log('length 0') // APPEND_OP LOG
+          this.expressions.push(currentOperand, operator)
+        } else if (isOperator(last)) {
+          // console.log('isOperator(last)');                    // APPEND_OP LOG
+          this.expressions.push(currentOperand, operator)
+        } else if (last === ')') {
+          // console.log('last === )');                          // APPEND_OP LOG
+          this.expressions.push(operator)
+        } else if (last === '(') {
+          // console.log('last === (');                          // APPEND_OP LOG
+          this.expressions.push(currentOperand, operator)
+        } else {
+          // console.log('else');
+          // this.expressions.push(operator, currentOperand);
+        }
+      }
+
+      this.currentOperator = operator
+      this.mode = MODE_INSERT_OPERAND | MODE_SHOW_TOTAL
+
+      console.log('UPDATE_OPERATOR:', this.expressions)
+    },
+
+    addParen({ operator }) {
+      const last = this.expressions[this.expressions.length - 1] || ''
+      const { currentOperand, openParenStack } = this
+
+      // console.log('ADD_PAREN:', {last, operator});
+
+      if (operator === ')' && openParenStack === 0) {
+        // No need to add closing paren if there is no open paren
+        return
+      } else if (operator === '(' && last === ')') {
+        // FIXME: Look at real calculator for semantics
+        return
+      }
+
+      if (last === '(' && operator === ')') {
+        // Handle immediate closed parens
+        this.expressions.push(currentOperand, operator)
+      } else if (isOperator(last) && operator === ')') {
+        // Automatically append current operand when expressions
+        // is "(5 *" so result is "(5 * 5)"
+        this.expressions.push(currentOperand, operator)
+      } else if ((isOperator(last) || length === 0) && operator === '(') {
+        // Handle "5 *" where the result is "5 * (" and "(" is the beginning
+        // of a new group expression
+        this.expressions.push(operator)
+      }
+
+      if (operator === '(') {
+        this.openParenStack++
+      } else if (operator === ')') {
+        this.openParenStack--
+      }
+
+      console.log('ADD_PAREN')
+    },
+
+    appendOperand({ value, operator }) {
+      const currentOperand = this.currentOperand
+      let newOperand = currentOperand
+      let newMode
+
+      // Don't append 0 to 0
+      if (value === '0' && currentOperand[0] === '0') {
+        return
+      } else if (value === '.' && currentOperand.includes('.')) {
+        // Avoid appending multiple decimals
+        return
+      }
+
+      // Switch modes from showing the total to the current operand
+      if (this.mode & MODE_SHOW_TOTAL) {
+        newMode = MODE_INSERT_OPERAND
+      }
+
+      if (this.mode & MODE_INSERT_OPERAND) {
+        // console.log('INSERT');
+        newOperand = value.toString()
+        this.mode = MODE_APPEND_OPERAND
+      } else {
+        // console.log('APPEND');
+        newOperand += value.toString()
+      }
+
+      // TODO: Update font size, actually should do that in the vm
+      this.currentOperand = newOperand.substring(0, MAX_NUMBER_LENGTH)
+    },
+
+    showTotal({ explicit } = {}) {
+      const last = this.expressions[this.expressions.length - 1] || ''
+      const expressions = this.expressions.slice(0)
+      const currentOperand = this.currentOperand
+      const mode = this.mode
+      const currentTotal = this.total
+      const openParenStack = this.openParenStack
+      const isFirstNumber = typeof Number(expressions[0]) === 'number'
+      const isSecondOperator = isOperator(expressions[1] || '')
+      const length = expressions.length
+      let times = openParenStack
+      let total
+
+      if (expressions.length === 0) {
+        return
+      } else if (
+        explicit &&
+        isFirstNumber &&
+        isSecondOperator &&
+        length === 2
+      ) {
+        // Handle case where expressions is 5 *
+
+        // console.log('explicit && isFirstNumber && isSecondOperator');
+        expressions.push(currentOperand)
+      } else if (explicit && isOperator(last)) {
+        // Handle case where expressions is ['5', '*', '4', '+'] and
+        // the total is being explicitly being requested
+
+        // console.log('explicit && isOperator(last)', isOperator(last), last);
+        if (mode & MODE_INSERT_OPERAND) {
+          expressions.push(currentTotal)
+        } else if (mode & MODE_APPEND_OPERAND) {
+          expressions.push(currentOperand)
+        }
+      } else if (isOperator(last)) {
+        // Handle case where expressions is ['5', '*', '4', '+']
+        expressions.pop()
+      }
+
+      if (explicit) {
+        // Automatically close parens when explicitly requesting
+        // the total
+        let times = openParenStack
+
+        while (times-- > 0) {
+          expressions.push(')')
+        }
+      } else if (!explicit && openParenStack === 1) {
+        // Auto close if there is only one missing paren
+        expressions.push(')')
+      }
+
+      try {
+        total = evalmath(expressions.join(' '))
+        console.log(expressions.join(' '), total)
+
+        if (explicit) {
+          this.clear()
+        }
+
+        this.total = total
+      } catch (err) {
+        if (explicit) {
+          this.clear()
+          this.error = err
+          console.log(err)
+        }
+      }
+
+      console.log(
+        'SHOW_TOTAL; Expressions: "%s"; Total: %s; Explicit: %s',
+        expressions.join(' '),
+        total,
+        !!explicit
+      )
+    }
+  }
+}
+</script>
+
+<style>
+/* // */
+/* // -> Design credit goes to Jaroslav Getman */
+/* // -> https://dribbble.com/shots/2334270-004-Calculator */
+/* // */
+
+/* @import url('https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css') */
+/* @import url('https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300,400italic,600,700,900,200') */
+
+/* @import 'bourbon' */
+
+html {
+  --foreground--dark: #151515;
+
+  --background-gradient-1: #b6b2ab;
+  --background-gradient-2: #b3afa7;
+
+  --background-gradient-3: #b8b5af;
+  --background-gradient-4: #78736b;
+
+  --background-gradient-5: #6f6862;
+  --background-gradient-6: #58504b;
+
+  --background-gradient-7: #5f574e;
+  --background-gradient-8: #625a51;
+
+  /* // I don't know how to get the colors closer here, would need the actual hsla */
+  --gradient-blue-1: hsla(226, 12%, 40%, 0.76);
+  --gradient-blue-2: hsla(222, 12%, 13%, 0.8);
+
+  --gradient-orange-1: #ff8d4b;
+  --gradient-orange-2: #ff542e;
+
+  --calculator-width: 260px;
+  --header-padding-left: 20px;
+  --something-height: 22px;
+  font-family: Quicksand;
+}
+
+/*
+html {
+  box-sizing: border-box;
+  color: #222;
+  font-size: 1rem;
+  text-rendering: optimizeLegibility;
+} */
+
+.Calculator,
+.Calculator *,
+.Calculator *:before,
+.Calculator *:after {
+  box-sizing: inherit;
+}
+
+body {
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-image: linear-gradient(
+    135deg,
+    #b6b2ab 0%,
+    #b3afa7 25%,
+    #b8b5af 25%,
+    #78736b 50%,
+    #6f6862 50%,
+    #58504b 75%,
+    #5f574e 75%,
+    #625a51 100%
+  );
+  min-height: 100vh;
+}
+
+.Calculator {
+  box-shadow: 12px 18px 45px 0 rgba(0, 0, 0, 0.25);
+  cursor: default;
+  font-family: Source Sans Pro;
+  margin: 0 auto;
+  position: absolute;
+  line-height: 1.5;
+  right: 50%;
+  transform: translate(-50%, -50%);
+  top: 50%;
+  user-select: none;
+  /* , 50% null null 50%) */
+  width: var(--calculator-width);
+}
+
+.Calculator-header {
+  background: white;
+  overflow: hidden;
+  padding: 20px var(--header-padding-left);
+  position: relative;
+  text-align: right;
+}
+
+.Calculator-expressions {
+  color: rgba(158, 158, 158, 0.76);
+  /* color: adjust-color($gradient-blue-1, $saturation: -20, $lightness: 22); */
+  display: block;
+  float: right;
+  font-size: 15px;
+  line-height: var(--something-height);
+  min-height: var(--something-height);
+  position: relative;
+  white-space: nowrap;
+  width: 100%;
+  word-wrap: normal;
+}
+
+.Calculator-expressionsList {
+  display: block;
+  float: right;
+}
+
+/* // 	Not sure how to represent that there are more expressions to the left */
+.Calculator__expressionsOverflow {
+  /* $width: 2px */
+  color: #333;
+  box-shadow: 5px 0 20px 4px rgba(0, 0, 0, 0.3);
+  font-weight: 700;
+  opacity: 0;
+  padding-right: 0px;
+  text-align: center;
+  transition: opacity 0.5s;
+  transform: translate(0, -50%);
+  /* +position(absolute, 50% null null negative($header-padding-left) - $width - 2) */
+  /* +size($width $height - 5) */
+}
+
+.Calculator__expressionsOverflow:before {
+  content: '';
+}
+
+.Calculator__expressionsOverflow.is-showing {
+  opacity: 1;
+}
+
+.Calculator-operands {
+  color: var(--foreground--dark);
+  font-size: 60px;
+  font-weight: 200;
+  line-height: 1.1;
+  clear: both;
+}
+
+.Calculator-currentOperand {
+  display: block;
+  float: right;
+  line-height: 60px;
+  overflow: visible;
+  min-height: 60px;
+  transition-duration: 0.2s;
+  transition-property: font-size;
+}
+
+.Calculator-currentOperand.has-error {
+  color: hsla(10, 85%, 57%, 1);
+}
+
+.Calculator-body {
+  background: white;
+}
+
+.Calculator-buttonsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  overflow: visible;
+  position: relative;
+}
+
+.Calculator-buttonsContainer:before {
+  background-color: rgba(90, 95, 114, 0.76);
+  background-image: linear-gradient(
+    to bottom,
+    rgba(90, 95, 114, 0.76),
+    rgba(29, 32, 37, 0.8)
+  );
+  box-shadow: 17px 27px 72px 1px rgba(0, 0, 0, 0.3);
+  content: '';
+  filter: drop-shadow(0px 0px 7px rgba(0, 0, 0, 0.2));
+  left: -18px;
+  position: absolute;
+  right: -18px;
+  top: 0;
+  bottom: 0;
+  /* width: 100%; */
+  /* height: 100%; */
+}
+
+.Calculator-button {
+  background-color: transparent;
+  border: 0;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  display: flex;
+  font-family: Source Sans Pro;
+  font-size: 22px;
+  font-weight: 300;
+  justify-content: center;
+  line-height: 70px;
+  outline: 0;
+  padding: 0;
+  position: relative;
+  text-align: center;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
+  transition: box-shadow 0.2s, background-color 0.15s;
+  z-index: 1;
+  width: 25%;
+}
+
+.Calculator-button:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+.Calculator-button.is-active,
+.Calculator-button:active {
+  box-shadow: inset 0 3px 15px 0 rgba(0, 0, 0, 0.3);
+}
+
+.Calculator-button > span {
+  display: block;
+}
+
+.Calculator-button.is-negation,
+.Calculator-button.is-modulo {
+  font-size: 18px;
+}
+
+.Calculator-button.is-square {
+  font-size: 16px;
+}
+
+.Calculator-button.is-division {
+  font-size: 20px;
+}
+
+.Calculator-button.is-multiplication {
+  font-size: 30px;
+}
+
+.Calculator-button.is-addition {
+  font-size: 26px;
+}
+
+.Calculator-button.is-subtraction {
+  font-size: 25px;
+}
+
+.Calculator-button.is-paren {
+  display: flex;
+  font-size: 18px;
+  width: 12.5%;
+}
+
+.Calculator-button--paren:hover,
+.Calculator-button--paren:active {
+  background: initial !important;
+  box-shadow: none !important;
+  cursor: default !important;
+}
+
+.Calculator-button--paren > span {
+  flex: 50%;
+}
+
+.Calculator-equals {
+  background-color: transparent;
+  border: 0;
+  /* +linear-gradient(left, $gradient-orange-1, $gradient-orange-2) */
+  background-image: linear-gradient(to right, #ff8d4b, #ff542e);
+  cursor: pointer;
+  display: block;
+  padding: 26px 0;
+  outline: none;
+  position: relative;
+  z-index: -1;
+  width: 100%;
+}
+
+.Calculator-equalsLine {
+  background: white;
+  display: block;
+  margin: 0 auto 6px;
+  box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.4);
+  width: 20px;
+  height: 1px;
+}
+
+.Calculator-equalsLine:last-child {
+  margin-bottom: 0;
+}
+</style>
