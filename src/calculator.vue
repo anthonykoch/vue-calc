@@ -10,7 +10,7 @@
       <header class="Calculator-header">
         <div class="Calculator-expressions">
           <span class="Calculator-expressionsOverflow"></span
-          ><span class="Calculator-expressionsList">{{ expressionList }}</span>
+          ><span class="Calculator-expressionsList">{{ formula }}</span>
         </div>
         <div class="Calculator-operands">
           <span
@@ -18,7 +18,7 @@
             :class="{ 'has-error': error }"
             :style="{
               'font-size': font.size,
-              'font-weight': font.weight
+              'font-weight': font.weight,
             }"
           >
             <span v-if="error">Error</span>
@@ -47,7 +47,7 @@
       <button
         title="equals"
         class="Calculator-equals"
-        @click="showTotal({ explicit: true })"
+        @click="onExplicitEquals"
       >
         <div class="Calculator-equalsLine"></div>
         <div class="Calculator-equalsLine"></div>
@@ -58,6 +58,9 @@
 
 <script>
 import evalmath, { isOperator } from './math'
+
+const keyboardNumbers = ['1','2','3','4','5','6','7','8','9']
+const keyboardOperators = ['*', '+', '-', '/']
 
 const ACTION_CLEAR = 'clear'
 const ACTION_CLEAR_ENTRY = 'clearEntry'
@@ -73,13 +76,13 @@ const buttons = [
     id: 1,
     text: 'C',
     className: 'is-clear',
-    action: ACTION_CLEAR
+    action: ACTION_CLEAR,
   },
   {
     id: 2,
     text: '+/-',
     className: 'is-negation',
-    action: ACTION_NEGATE
+    action: ACTION_NEGATE,
   },
   {
     id: 3,
@@ -87,8 +90,8 @@ const buttons = [
     className: 'is-modulo',
     action: ACTION_UPDATE_OPERATOR,
     args: {
-      operator: '%'
-    }
+      operator: '%',
+    },
   },
   {
     id: 4,
@@ -96,8 +99,8 @@ const buttons = [
     className: 'is-square',
     action: ACTION_UPDATE_OPERATOR,
     args: {
-      operator: '√'
-    }
+      operator: '√',
+    },
   },
 
   {
@@ -105,24 +108,24 @@ const buttons = [
     text: '7',
     action: ACTION_APPEND_OPERAND,
     args: {
-      value: '7'
-    }
+      value: '7',
+    },
   },
   {
     id: 6,
     text: '8',
     action: ACTION_APPEND_OPERAND,
     args: {
-      value: '8'
-    }
+      value: '8',
+    },
   },
   {
     id: 7,
     text: '9',
     action: ACTION_APPEND_OPERAND,
     args: {
-      value: '9'
-    }
+      value: '9',
+    },
   },
   {
     id: 8,
@@ -130,8 +133,8 @@ const buttons = [
     className: 'is-division',
     action: ACTION_UPDATE_OPERATOR,
     args: {
-      operator: '/'
-    }
+      operator: '/',
+    },
   },
 
   {
@@ -139,24 +142,24 @@ const buttons = [
     text: '4',
     action: ACTION_APPEND_OPERAND,
     args: {
-      value: '4'
-    }
+      value: '4',
+    },
   },
   {
     id: 10,
     text: '5',
     action: ACTION_APPEND_OPERAND,
     args: {
-      value: '5'
-    }
+      value: '5',
+    },
   },
   {
     id: 11,
     text: '6',
     action: ACTION_APPEND_OPERAND,
     args: {
-      value: '6'
-    }
+      value: '6',
+    },
   },
   {
     id: 12,
@@ -165,8 +168,8 @@ const buttons = [
     icon: 'ion-ios-close-empty',
     action: ACTION_UPDATE_OPERATOR,
     args: {
-      operator: '*'
-    }
+      operator: '*',
+    },
   },
 
   {
@@ -174,24 +177,24 @@ const buttons = [
     text: '1',
     action: ACTION_APPEND_OPERAND,
     args: {
-      value: '1'
-    }
+      value: '1',
+    },
   },
   {
     id: 14,
     text: '2',
     action: ACTION_APPEND_OPERAND,
     args: {
-      value: '2'
-    }
+      value: '2',
+    },
   },
   {
     id: 15,
     text: '3',
     action: ACTION_APPEND_OPERAND,
     args: {
-      value: '3'
-    }
+      value: '3',
+    },
   },
   {
     id: 16,
@@ -200,8 +203,8 @@ const buttons = [
     icon: 'ion-ios-minus-empty',
     action: ACTION_UPDATE_OPERATOR,
     args: {
-      operator: '-'
-    }
+      operator: '-',
+    },
   },
 
   {
@@ -209,8 +212,8 @@ const buttons = [
     text: '0',
     action: ACTION_APPEND_OPERAND,
     args: {
-      value: '0'
-    }
+      value: '0',
+    },
   },
   {
     id: 18,
@@ -218,8 +221,8 @@ const buttons = [
     className: ['is-paren', 'is-open-paren'],
     action: ACTION_ADD_PAREN,
     args: {
-      operator: '('
-    }
+      operator: '(',
+    },
   },
   {
     id: 19,
@@ -227,8 +230,8 @@ const buttons = [
     className: ['is-paren', 'is-close-paren'],
     action: ACTION_ADD_PAREN,
     args: {
-      operator: ')'
-    }
+      operator: ')',
+    },
   },
 
   {
@@ -236,8 +239,8 @@ const buttons = [
     text: '.',
     action: ACTION_APPEND_OPERAND,
     args: {
-      value: '.'
-    }
+      value: '.',
+    },
   },
   {
     id: 21,
@@ -246,9 +249,9 @@ const buttons = [
     icon: 'ion-ios-plus-empty',
     action: ACTION_UPDATE_OPERATOR,
     args: {
-      operator: '+'
-    }
-  }
+      operator: '+',
+    },
+  },
 ]
 
 // Mode show total causes the total to be displayed in the current operand display
@@ -283,7 +286,47 @@ function getFlags(flags) {
   return arr.join('|')
 }
 
+const defaultCommands = [
+  {
+    match: {
+      key: 'Enter',
+    },
+    action: ACTION_SHOW_TOTAL,
+  },
+  {
+    match: {
+      key: 'Backspace',
+    },
+    action: ACTION_BACKSPACE,
+  },
+  {
+    match: {
+      key: 'Escape',
+    },
+    action: ACTION_CLEAR,
+  },
+  ...keyboardNumbers.map((n) => ({
+    match: {
+      key: n,
+    },
+    action: ACTION_APPEND_OPERAND
+  })),
+  ...keyboardOperators.map((n) => ({
+    match: {
+      key: n,
+    },
+    action: ACTION_UPDATE_OPERATOR
+  })),
+]
+
 export default {
+  props: {
+    commands: Object,
+    default: () => defaultCommands,
+  },
+  mounted() {
+    window.addEventListener('keydown', this.onKeyDown)
+  },
   data() {
     return {
       MODE_SHOW_TOTAL,
@@ -298,14 +341,10 @@ export default {
       openParenStack: 0,
       error: null,
       total: 147,
-      font: {
-        size: 14,
-        weight: 300
-      }
     }
   },
   computed: {
-    expressionList() {
+    formula() {
       return this.expressions
         .map((str, index, array) => {
           const s = str.trim()
@@ -323,31 +362,71 @@ export default {
           return str
         })
         .join('')
-    }
+    },
+    font() {
+      // TODO: Change this to be some equation
+      let length
+
+      if (this.mode & MODE_SHOW_TOTAL) {
+        length = this.total.toString().length
+      } else {
+        length = this.currentOperand.toString().length
+      }
+
+      let size
+      let weight
+
+      if (length < 8) {
+        size = '60px'
+        weight = '200'
+      } else if (length <= MAX_NUMBER_LENGTH) {
+        size = '28px'
+        weight = '300'
+      } else if (length >= MAX_NUMBER_LENGTH) {
+        size = '24px'
+        weight = '300'
+      }
+
+      return { size, weight }
+    },
   },
   methods: {
+    onKeyDown(e) {
+      if (event.defaultPrevented) {
+        return
+      }
+    },
+    onExplicitEquals() {
+      this.showTotal({ explicit: true })
+      this.$emit('update:total.explicit')
+    },
     exec(action, args) {
       console.log(action)
 
       switch (action) {
         case ACTION_CLEAR: {
           this.clear(args)
+          this.$emit('clear')
           break
         }
         case ACTION_NEGATE: {
           this.negate(args)
+          this.$emit('negate')
           break
         }
         case ACTION_UPDATE_OPERATOR: {
           this.updateOperator(args)
+          this.$emit('operator.update')
           break
         }
         case ACTION_APPEND_OPERAND: {
           this.appendOperand(args)
+          this.$emit('operand.append')
           break
         }
         case ACTION_ADD_PAREN: {
           this.addParen(args)
+          this.$emit('paren.add')
           break
         }
         default: {
@@ -356,6 +435,7 @@ export default {
       }
 
       this.showTotal()
+      this.$emit('update:total')
     },
     clear() {
       this.expressions = []
@@ -386,6 +466,7 @@ export default {
       if (this.currentOperand !== 0) {
         this.currentOperand = (-this.currentOperand).toString()
       }
+
       console.log(this.currentOperand)
     },
 
@@ -408,27 +489,18 @@ export default {
           this.expressions.push(operator)
         } else if (last === '(') {
           this.expressions.push(currentOperand, operator)
-        } else {
-          // console.log('else');                                // APPEND_OP LOG
         }
       } else if (mode & MODE_APPEND_OPERAND) {
         console.log('MODE_APPEND_OPERAND')
 
         if (length === 0) {
-          console.log('length 0') // APPEND_OP LOG
           this.expressions.push(currentOperand, operator)
         } else if (isOperator(last)) {
-          // console.log('isOperator(last)');                    // APPEND_OP LOG
           this.expressions.push(currentOperand, operator)
         } else if (last === ')') {
-          // console.log('last === )');                          // APPEND_OP LOG
           this.expressions.push(operator)
         } else if (last === '(') {
-          // console.log('last === (');                          // APPEND_OP LOG
           this.expressions.push(currentOperand, operator)
-        } else {
-          // console.log('else');
-          // this.expressions.push(operator, currentOperand);
         }
       }
 
@@ -470,8 +542,6 @@ export default {
       } else if (operator === ')') {
         this.openParenStack--
       }
-
-      console.log('ADD_PAREN')
     },
 
     appendOperand({ value, operator }) {
@@ -581,8 +651,10 @@ export default {
         total,
         !!explicit
       )
-    }
-  }
+
+      return total
+    },
+  },
 }
 </script>
 
@@ -593,9 +665,6 @@ export default {
 /* // */
 
 /* @import url('https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css') */
-/* @import url('https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300,400italic,600,700,900,200') */
-
-/* @import 'bourbon' */
 
 html {
   --foreground--dark: #151515;
@@ -668,7 +737,6 @@ body {
   transform: translate(-50%, -50%);
   top: 50%;
   user-select: none;
-  /* , 50% null null 50%) */
   width: var(--calculator-width);
 }
 
@@ -682,7 +750,6 @@ body {
 
 .Calculator-expressions {
   color: rgba(158, 158, 158, 0.76);
-  /* color: adjust-color($gradient-blue-1, $saturation: -20, $lightness: 22); */
   display: block;
   float: right;
   font-size: 15px;
