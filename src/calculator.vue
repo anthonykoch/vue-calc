@@ -5,6 +5,7 @@
         href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400&display=swap"
         rel="stylesheet"
       />
+      <meta name="viewport" content="width=device-width, initial-scale=1">
     </noscript>
     <div class="Calculator">
       <header class="Calculator-header">
@@ -37,9 +38,7 @@
             @click="exec(button.action, button.args)"
           >
             <span
-              :class="button.icon ? button.icon : ''"
-              v-if="button.children == null"
-              v-text="button.text"
+              v-html="button.text"
             />
           </button>
         </div>
@@ -59,7 +58,7 @@
 <script>
 import evalmath, { isOperator } from './math'
 
-const keyboardNumbers = ['1','2','3','4','5','6','7','8','9']
+const keyboardNumbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
 const keyboardOperators = ['*', '+', '-', '/']
 
 const ACTION_CLEAR = 'clear'
@@ -73,10 +72,17 @@ const ACTION_SHOW_TOTAL = 'showTotal'
 
 const buttons = [
   {
-    id: 1,
+    id: 0,
     text: 'C',
     className: 'is-clear',
     action: ACTION_CLEAR,
+  },
+
+  {
+    id: 1,
+    text: 'CE',
+    className: 'is-clearEntry',
+    action: ACTION_CLEAR_ENTRY,
   },
   {
     id: 2,
@@ -93,15 +99,15 @@ const buttons = [
       operator: '%',
     },
   },
-  {
-    id: 4,
-    text: '√',
-    className: 'is-square',
-    action: ACTION_UPDATE_OPERATOR,
-    args: {
-      operator: '√',
-    },
-  },
+  // {
+  //   id: 4,
+  //   text: '√',
+  //   className: 'is-square',
+  //   action: ACTION_UPDATE_OPERATOR,
+  //   args: {
+  //     operator: '√',
+  //   },
+  // },
 
   {
     id: 5,
@@ -163,9 +169,8 @@ const buttons = [
   },
   {
     id: 12,
-    text: '',
     className: 'is-multiplication',
-    icon: 'ion-ios-close-empty',
+    text: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="rgba(255,255,255,.9)" stroke="rgba(255,255,255,.9)" stroke-linecap="round" stroke-linejoin="round" stroke-width="32" d="M368 368L144 144"/><path fill="none" stroke="rgba(255,255,255,.9)" stroke-linecap="round" stroke-linejoin="round" stroke-width="32" d="M368 144L144 368"/></svg>`,
     action: ACTION_UPDATE_OPERATOR,
     args: {
       operator: '*',
@@ -198,9 +203,8 @@ const buttons = [
   },
   {
     id: 16,
-    text: '',
     className: 'is-subtraction',
-    icon: 'ion-ios-minus-empty',
+    text: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><title>ionicons-v5-e</title><line x1="400" y1="256" x2="112" y2="256" style="fill:rgba(255,255,255,0.9);stroke:rgba(255,255,255,0.9);stroke-linecap:round;stroke-linejoin:round;stroke-width:32px"/></svg>`,
     action: ACTION_UPDATE_OPERATOR,
     args: {
       operator: '-',
@@ -245,8 +249,8 @@ const buttons = [
   {
     id: 21,
     text: '',
-    className: 'addition',
-    icon: 'ion-ios-plus-empty',
+    className: 'is-addition',
+    text: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path style="fill: rgba(255,255,255,0.9);stroke: rgba(255,255,255,0.9)" d="M368.5 240H272v-96.5c0-8.8-7.2-16-16-16s-16 7.2-16 16V240h-96.5c-8.8 0-16 7.2-16 16 0 4.4 1.8 8.4 4.7 11.3 2.9 2.9 6.9 4.7 11.3 4.7H240v96.5c0 4.4 1.8 8.4 4.7 11.3 2.9 2.9 6.9 4.7 11.3 4.7 8.8 0 16-7.2 16-16V272h96.5c8.8 0 16-7.2 16-16s-7.2-16-16-16z"/></svg>`,
     action: ACTION_UPDATE_OPERATOR,
     args: {
       operator: '+',
@@ -305,24 +309,39 @@ const defaultCommands = [
     },
     action: ACTION_CLEAR,
   },
-  ...keyboardNumbers.map((n) => ({
+  {
+    match: {
+      key: 'Delete',
+    },
+    action: ACTION_CLEAR_ENTRY,
+  },
+  ...keyboardNumbers.map(n => ({
     match: {
       key: n,
     },
-    action: ACTION_APPEND_OPERAND
+    action: ACTION_APPEND_OPERAND,
+    args: {
+      value: n,
+    },
   })),
-  ...keyboardOperators.map((n) => ({
+  ...keyboardOperators.map(n => ({
     match: {
       key: n,
     },
-    action: ACTION_UPDATE_OPERATOR
+    action: ACTION_UPDATE_OPERATOR,
+    args: {
+      value: n,
+    },
   })),
 ]
 
 export default {
   props: {
-    commands: Object,
-    default: () => defaultCommands,
+    commands: {
+      type: Array,
+      default: () => defaultCommands,
+    },
+
   },
   mounted() {
     window.addEventListener('keydown', this.onKeyDown)
@@ -395,8 +414,20 @@ export default {
       if (event.defaultPrevented) {
         return
       }
+
+      this.commands.forEach(command => {
+        Object.keys(command.match).map((key) => {
+          const value = command.match[key]
+
+          if (e[key] === value) {
+            this.exec(command.action, command.args)
+            this.$emit('keypress')
+          }
+        })
+      })
     },
     onExplicitEquals() {
+      console.log('wtf')
       this.showTotal({ explicit: true })
       this.$emit('update:total.explicit')
     },
@@ -404,9 +435,19 @@ export default {
       console.log(action)
 
       switch (action) {
+        case ACTION_BACKSPACE: {
+          this.backspace(args)
+          this.$emit('backspace')
+          break
+        }
         case ACTION_CLEAR: {
           this.clear(args)
           this.$emit('clear')
+          break
+        }
+        case ACTION_CLEAR_ENTRY: {
+          this.clearEntry(args)
+          this.$emit('clear-entry')
           break
         }
         case ACTION_NEGATE: {
@@ -430,7 +471,7 @@ export default {
           break
         }
         default: {
-          console.error('action not found', action)
+          console.error(`action not found: "${action}"`)
         }
       }
 
@@ -730,12 +771,9 @@ body {
   box-shadow: 12px 18px 45px 0 rgba(0, 0, 0, 0.25);
   cursor: default;
   font-family: Source Sans Pro;
-  margin: 0 auto;
-  position: absolute;
   line-height: 1.5;
-  right: 50%;
-  transform: translate(-50%, -50%);
-  top: 50%;
+  margin: 0 auto;
+  position: realtive;
   user-select: none;
   width: var(--calculator-width);
 }
@@ -888,16 +926,16 @@ body {
   font-size: 20px;
 }
 
-.Calculator-button.is-multiplication {
-  font-size: 30px;
+.Calculator-button.is-multiplication svg {
+  width: 20px;
 }
 
-.Calculator-button.is-addition {
-  font-size: 26px;
+.Calculator-button.is-addition svg {
+  width: 20px;
 }
 
-.Calculator-button.is-subtraction {
-  font-size: 25px;
+.Calculator-button.is-subtraction svg {
+  width: 20px;
 }
 
 .Calculator-button.is-paren {
@@ -920,22 +958,21 @@ body {
 .Calculator-equals {
   background-color: transparent;
   border: 0;
-  /* +linear-gradient(left, $gradient-orange-1, $gradient-orange-2) */
   background-image: linear-gradient(to right, #ff8d4b, #ff542e);
   cursor: pointer;
   display: block;
   padding: 26px 0;
   outline: none;
   position: relative;
-  z-index: -1;
   width: 100%;
+  z-index: -1;
 }
 
 .Calculator-equalsLine {
   background: white;
+  box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.4);
   display: block;
   margin: 0 auto 6px;
-  box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.4);
   width: 20px;
   height: 1px;
 }
@@ -943,4 +980,5 @@ body {
 .Calculator-equalsLine:last-child {
   margin-bottom: 0;
 }
+
 </style>
