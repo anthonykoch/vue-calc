@@ -420,7 +420,7 @@ export default {
 
           if (e[key] === value) {
             this.exec(command.action, command.args)
-            this.$emit('keypress')
+            this.$emit('key', { key: e.key, args: ...command.args })
           }
         })
       })
@@ -468,7 +468,9 @@ export default {
           break
         }
         default: {
-          console.error(`action not found: "${action}"`)
+          if (process.env.NODE_ENV === 'development') {
+            console.error(`action not found: "${action}"`)
+          }
         }
       }
 
@@ -544,7 +546,7 @@ export default {
       this.currentOperator = operator
       this.mode = MODE_INSERT_OPERAND | MODE_SHOW_TOTAL
 
-      console.log('UPDATE_OPERATOR:', this.expressions)
+      // console.log('UPDATE_OPERATOR:', this.expressions)
     },
 
     addParen({ operator }) {
@@ -678,15 +680,16 @@ export default {
           this.clear()
           this.error = err
           console.log(err)
+          this.$emit('formula-error', err)
         }
       }
 
-      console.log(
-        'SHOW_TOTAL; Expressions: "%s"; Total: %s; Explicit: %s',
-        expressions.join(' '),
-        total,
-        !!explicit
-      )
+      // console.log(
+      //   'SHOW_TOTAL; Expressions: "%s"; Total: %s; Explicit: %s',
+      //   expressions.join(' '),
+      //   total,
+      //   !!explicit
+      // )
 
       if (explicit) {
         this.$emit('update:total.explicit')
@@ -705,7 +708,6 @@ export default {
 /* // -> Design credit goes to Jaroslav Getman */
 /* // -> https://dribbble.com/shots/2334270-004-Calculator */
 /* // */
-
 
 html {
   --foreground--dark: #151515;
