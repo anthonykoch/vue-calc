@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "npm run build:umd & npm run build:es & npm run build:unpkg",
-    "test:unit": "vue-cli-service test:unit",
+    "test": "vue-cli-service test:unit",
     "build:es": "rollup --config build/rollup.config.js --format es --file dist/calculator.esm.js",
     "build:umd": "rollup --config build/rollup.config.js --format umd --file dist/calculator.umd.js",
     "build:unpkg": "rollup --config build/rollup.config.js --format iife --file dist/calculator.min.js",

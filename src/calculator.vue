@@ -1,21 +1,22 @@
 <template>
-  <div>
+  <div class="CalculatorBackground">
     <noscript>
       <link
         href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400&display=swap"
         rel="stylesheet"
       />
-      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
     </noscript>
     <div class="Calculator">
       <header class="Calculator-header">
-        <div class="Calculator-expressions">
-          <span class="Calculator-expressionsOverflow"></span
-          ><span class="Calculator-expressionsList">{{ formula }}</span>
+        <div class="Calculator-formula" data-formula>
+          <span class="Calculator-formulaOverflow"></span
+          ><span class="Calculator-formulaList">{{ formula }}</span>
         </div>
         <div class="Calculator-operands">
           <span
             class="Calculator-currentOperand"
+            data-total
             :class="{ 'has-error': error }"
             :style="{
               'font-size': font.size,
@@ -34,12 +35,11 @@
             v-for="button in buttons"
             class="Calculator-button"
             :key="button.id"
+            :data-id="button.id"
             :class="button.className"
             @click="exec(button.action, button.args)"
           >
-            <span
-              v-html="button.text"
-            />
+            <span v-html="button.text" />
           </button>
         </div>
       </div>
@@ -72,26 +72,26 @@ const ACTION_SHOW_TOTAL = 'showTotal'
 
 const buttons = [
   {
-    id: 0,
+    id: 'C',
     text: 'C',
     className: 'is-clear',
     action: ACTION_CLEAR,
   },
 
   {
-    id: 1,
+    id: 'CE',
     text: 'CE',
     className: 'is-clearEntry',
     action: ACTION_CLEAR_ENTRY,
   },
   {
-    id: 2,
+    id: 'negate',
     text: '+/-',
     className: 'is-negation',
     action: ACTION_NEGATE,
   },
   {
-    id: 3,
+    id: 'modulo',
     text: '%',
     className: 'is-modulo',
     action: ACTION_UPDATE_OPERATOR,
@@ -110,7 +110,7 @@ const buttons = [
   // },
 
   {
-    id: 5,
+    id: '7',
     text: '7',
     action: ACTION_APPEND_OPERAND,
     args: {
@@ -118,7 +118,7 @@ const buttons = [
     },
   },
   {
-    id: 6,
+    id: '8',
     text: '8',
     action: ACTION_APPEND_OPERAND,
     args: {
@@ -126,7 +126,7 @@ const buttons = [
     },
   },
   {
-    id: 7,
+    id: '9',
     text: '9',
     action: ACTION_APPEND_OPERAND,
     args: {
@@ -134,7 +134,7 @@ const buttons = [
     },
   },
   {
-    id: 8,
+    id: '/',
     text: '/',
     className: 'is-division',
     action: ACTION_UPDATE_OPERATOR,
@@ -144,7 +144,7 @@ const buttons = [
   },
 
   {
-    id: 9,
+    id: '4',
     text: '4',
     action: ACTION_APPEND_OPERAND,
     args: {
@@ -152,7 +152,7 @@ const buttons = [
     },
   },
   {
-    id: 10,
+    id: '5',
     text: '5',
     action: ACTION_APPEND_OPERAND,
     args: {
@@ -160,7 +160,7 @@ const buttons = [
     },
   },
   {
-    id: 11,
+    id: '6',
     text: '6',
     action: ACTION_APPEND_OPERAND,
     args: {
@@ -168,7 +168,7 @@ const buttons = [
     },
   },
   {
-    id: 12,
+    id: '*',
     className: 'is-multiplication',
     text: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="rgba(255,255,255,.9)" stroke="rgba(255,255,255,.9)" stroke-linecap="round" stroke-linejoin="round" stroke-width="32" d="M368 368L144 144"/><path fill="none" stroke="rgba(255,255,255,.9)" stroke-linecap="round" stroke-linejoin="round" stroke-width="32" d="M368 144L144 368"/></svg>`,
     action: ACTION_UPDATE_OPERATOR,
@@ -178,7 +178,7 @@ const buttons = [
   },
 
   {
-    id: 13,
+    id: '1',
     text: '1',
     action: ACTION_APPEND_OPERAND,
     args: {
@@ -186,7 +186,7 @@ const buttons = [
     },
   },
   {
-    id: 14,
+    id: '2',
     text: '2',
     action: ACTION_APPEND_OPERAND,
     args: {
@@ -194,7 +194,7 @@ const buttons = [
     },
   },
   {
-    id: 15,
+    id: '3',
     text: '3',
     action: ACTION_APPEND_OPERAND,
     args: {
@@ -202,7 +202,7 @@ const buttons = [
     },
   },
   {
-    id: 16,
+    id: '-',
     className: 'is-subtraction',
     text: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><title>ionicons-v5-e</title><line x1="400" y1="256" x2="112" y2="256" style="fill:rgba(255,255,255,0.9);stroke:rgba(255,255,255,0.9);stroke-linecap:round;stroke-linejoin:round;stroke-width:32px"/></svg>`,
     action: ACTION_UPDATE_OPERATOR,
@@ -212,7 +212,7 @@ const buttons = [
   },
 
   {
-    id: 17,
+    id: '0',
     text: '0',
     action: ACTION_APPEND_OPERAND,
     args: {
@@ -220,7 +220,7 @@ const buttons = [
     },
   },
   {
-    id: 18,
+    id: '(',
     text: '(',
     className: ['is-paren', 'is-open-paren'],
     action: ACTION_ADD_PAREN,
@@ -229,7 +229,7 @@ const buttons = [
     },
   },
   {
-    id: 19,
+    id: ')',
     text: ')',
     className: ['is-paren', 'is-close-paren'],
     action: ACTION_ADD_PAREN,
@@ -239,7 +239,7 @@ const buttons = [
   },
 
   {
-    id: 20,
+    id: '.',
     text: '.',
     action: ACTION_APPEND_OPERAND,
     args: {
@@ -247,7 +247,7 @@ const buttons = [
     },
   },
   {
-    id: 21,
+    id: '+',
     text: '',
     className: 'is-addition',
     text: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path style="fill: rgba(255,255,255,0.9);stroke: rgba(255,255,255,0.9)" d="M368.5 240H272v-96.5c0-8.8-7.2-16-16-16s-16 7.2-16 16V240h-96.5c-8.8 0-16 7.2-16 16 0 4.4 1.8 8.4 4.7 11.3 2.9 2.9 6.9 4.7 11.3 4.7H240v96.5c0 4.4 1.8 8.4 4.7 11.3 2.9 2.9 6.9 4.7 11.3 4.7 8.8 0 16-7.2 16-16V272h96.5c8.8 0 16-7.2 16-16s-7.2-16-16-16z"/></svg>`,
@@ -341,7 +341,6 @@ export default {
       type: Array,
       default: () => defaultCommands,
     },
-
   },
   mounted() {
     window.addEventListener('keydown', this.onKeyDown)
@@ -416,7 +415,7 @@ export default {
       }
 
       this.commands.forEach(command => {
-        Object.keys(command.match).map((key) => {
+        Object.keys(command.match).map(key => {
           const value = command.match[key]
 
           if (e[key] === value) {
@@ -427,9 +426,7 @@ export default {
       })
     },
     onExplicitEquals() {
-      console.log('wtf')
       this.showTotal({ explicit: true })
-      this.$emit('update:total.explicit')
     },
     exec(action, args) {
       console.log(action)
@@ -476,7 +473,6 @@ export default {
       }
 
       this.showTotal()
-      this.$emit('update:total')
     },
     clear() {
       this.expressions = []
@@ -508,7 +504,7 @@ export default {
         this.currentOperand = (-this.currentOperand).toString()
       }
 
-      console.log(this.currentOperand)
+      // console.log(this.currentOperand)
     },
 
     updateOperator({ operator }) {
@@ -517,7 +513,7 @@ export default {
       const { mode, currentOperand } = this
 
       if (mode & MODE_INSERT_OPERAND) {
-        console.log('MODE_INSERT_OPERAND')
+        // console.log('MODE_INSERT_OPERAND')
 
         if (length === 0) {
           this.expressions.push(currentOperand, operator)
@@ -532,7 +528,7 @@ export default {
           this.expressions.push(currentOperand, operator)
         }
       } else if (mode & MODE_APPEND_OPERAND) {
-        console.log('MODE_APPEND_OPERAND')
+        // console.log('MODE_APPEND_OPERAND')
 
         if (length === 0) {
           this.expressions.push(currentOperand, operator)
@@ -671,7 +667,6 @@ export default {
 
       try {
         total = evalmath(expressions.join(' '))
-        console.log(expressions.join(' '), total)
 
         if (explicit) {
           this.clear()
@@ -692,6 +687,12 @@ export default {
         total,
         !!explicit
       )
+
+      if (explicit) {
+        this.$emit('update:total.explicit')
+      } else {
+        this.$emit('update:total')
+      }
 
       return total
     },
@@ -732,16 +733,7 @@ html {
   --calculator-width: 260px;
   --header-padding-left: 20px;
   --something-height: 22px;
-  font-family: Quicksand;
 }
-
-/*
-html {
-  box-sizing: border-box;
-  color: #222;
-  font-size: 1rem;
-  text-rendering: optimizeLegibility;
-} */
 
 .Calculator,
 .Calculator *,
@@ -750,7 +742,7 @@ html {
   box-sizing: inherit;
 }
 
-body {
+.CalculatorBackground {
   background-size: cover;
   background-repeat: no-repeat;
   background-image: linear-gradient(
@@ -773,9 +765,10 @@ body {
   font-family: Source Sans Pro;
   line-height: 1.5;
   margin: 0 auto;
-  position: realtive;
+  position: relative;
   user-select: none;
   width: var(--calculator-width);
+  z-index: 1;
 }
 
 .Calculator-header {
@@ -786,7 +779,7 @@ body {
   text-align: right;
 }
 
-.Calculator-expressions {
+.Calculator-formula {
   color: rgba(158, 158, 158, 0.76);
   display: block;
   float: right;
@@ -799,7 +792,7 @@ body {
   word-wrap: normal;
 }
 
-.Calculator-expressionsList {
+.Calculator-formulaList {
   display: block;
   float: right;
 }
@@ -980,5 +973,4 @@ body {
 .Calculator-equalsLine:last-child {
   margin-bottom: 0;
 }
-
 </style>
