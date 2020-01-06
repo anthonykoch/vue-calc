@@ -5,21 +5,22 @@
   "scripts": {
     "build": "npm run build:umd & npm run build:es & npm run build:unpkg",
     "test": "vue-cli-service test:unit",
-    "build:es": "rollup --config build/rollup.config.js --format es --file dist/calculator.esm.js",
-    "build:umd": "rollup --config build/rollup.config.js --format umd --file dist/calculator.umd.js",
-    "build:unpkg": "rollup --config build/rollup.config.js --format iife --file dist/calculator.min.js",
+    "build:es": "rollup --config rollup.config.js --format es --file build/calculator.esm.js",
+    "build:umd": "rollup --config rollup.config.js --format umd --file build/calculator.umd.js",
+    "build:unpkg": "rollup --config rollup.config.js --format iife --file build/calculator.min.js",
     "dev": "vue serve src/calculator.vue"
   },
-  "main": "dist/calculator.umd.js",
-  "module": "dist/calculator.esm.js",
+  "main": "build/calculator.umd.js",
+  "module": "build/calculator.esm.js",
   "browser": {
     "./sfc": "src/calculator.vue"
   },
-  "unpkg": "dist/calculator.min.js",
+  "unpkg": "build/calculator.min.js",
   "dependencies": {
     "@vue/cli-service": "^4.1.2",
     "core-js": "^3.4.4",
     "mathjs": "^6.3.0",
+    "rollup-plugin-uglify": "^6.0.4",
     "vue": "^2.6.10"
   },
   "devDependencies": {

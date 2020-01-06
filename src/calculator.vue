@@ -1,12 +1,12 @@
 <template>
   <div class="CalculatorBackground">
-    <noscript>
+    <!-- <noscript>
       <link
         href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400&display=swap"
         rel="stylesheet"
       />
       <meta name="viewport" content="width=device-width, initial-scale=1" />
-    </noscript>
+    </noscript> -->
     <div class="Calculator">
       <header class="Calculator-header">
         <div class="Calculator-formula" data-formula>
@@ -706,7 +706,6 @@ export default {
 /* // -> https://dribbble.com/shots/2334270-004-Calculator */
 /* // */
 
-/* @import url('https://cdnjs.cloudflare.com/ajax/libs/ionicons/2.0.1/css/ionicons.min.css') */
 
 html {
   --foreground--dark: #151515;
