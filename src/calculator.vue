@@ -10,8 +10,8 @@
     <div class="Calculator">
       <header class="Calculator-header">
         <div class="Calculator-formula" data-formula>
-          <span class="Calculator-formulaOverflow"></span
-          ><span class="Calculator-formulaList">{{ formula }}</span>
+          <span class="Calculator-formulaOverflow"></span>
+          <span class="Calculator-formulaList">{{ formuoli }}</span>
         </div>
         <div class="Calculator-operands">
           <span
@@ -341,6 +341,9 @@ export default {
       type: Array,
       default: () => defaultCommands,
     },
+    defaultFormula: {
+      type: Array,
+      default: () => [],
   },
   mounted() {
     window.addEventListener('keydown', this.onKeyDown)
@@ -351,8 +354,8 @@ export default {
       MODE_INSERT_OPERAND,
       MODE_APPEND_OPERAND,
       activeButtons: [],
+      expressions: this.$props.defaultFormula.slice(0),
       buttons,
-      expressions: ['5', '+', '7', '-', '45', '+', '3', '+', '177', '-'],
       currentOperand: '147',
       currentOperator: '-',
       mode: MODE_SHOW_TOTAL | MODE_INSERT_OPERAND,
@@ -362,7 +365,7 @@ export default {
     }
   },
   computed: {
-    formula() {
+    formuoli() {
       return this.expressions
         .map((str, index, array) => {
           const s = str.trim()
@@ -454,17 +457,17 @@ export default {
         }
         case ACTION_UPDATE_OPERATOR: {
           this.updateOperator(args)
-          this.$emit('operator.update')
+          this.$emit('operator-update')
           break
         }
         case ACTION_APPEND_OPERAND: {
           this.appendOperand(args)
-          this.$emit('operand.append')
+          this.$emit('operand-append')
           break
         }
         case ACTION_ADD_PAREN: {
           this.addParen(args)
-          this.$emit('paren.add')
+          this.$emit('paren-add')
           break
         }
         default: {
