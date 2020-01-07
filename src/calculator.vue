@@ -1,16 +1,15 @@
 <template>
   <div class="CalculatorBackground">
-    <!-- <noscript>
+    <noscript>
       <link
-        href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400&display=swap"
+        href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,300,400&display=swap"
         rel="stylesheet"
       />
-      <meta name="viewport" content="width=device-width, initial-scale=1" />
-    </noscript> -->
+    </noscript>
     <div class="Calculator">
       <header class="Calculator-header">
         <div class="Calculator-formula" data-formula>
-          <span class="Calculator-formulaOverflow"></span>
+          <span class="Calculator-formulaOverflow" />
           <span class="Calculator-formulaList">{{ formuoli }}</span>
         </div>
         <div class="Calculator-operands">
@@ -33,10 +32,10 @@
         <div class="Calculator-buttonsContainer">
           <button
             v-for="button in buttons"
-            class="Calculator-button"
             :key="button.id"
             :data-id="button.id"
             :class="button.className"
+            class="Calculator-button"
             @click="exec(button.action, button.args)"
           >
             <span v-html="button.text" />
@@ -48,8 +47,8 @@
         class="Calculator-equals"
         @click="onExplicitEquals"
       >
-        <div class="Calculator-equalsLine"></div>
-        <div class="Calculator-equalsLine"></div>
+        <div class="Calculator-equalsLine" />
+        <div class="Calculator-equalsLine" />
       </button>
     </div>
   </div>
@@ -170,7 +169,7 @@ const buttons = [
   {
     id: '*',
     className: 'is-multiplication',
-    text: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="rgba(255,255,255,.9)" stroke="rgba(255,255,255,.9)" stroke-linecap="round" stroke-linejoin="round" stroke-width="32" d="M368 368L144 144"/><path fill="none" stroke="rgba(255,255,255,.9)" stroke-linecap="round" stroke-linejoin="round" stroke-width="32" d="M368 144L144 368"/></svg>`,
+    text: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><path fill="inherit" d="M180.2 0L95.8 84.3 11.8.4 0 12.2 84 96 0 179.9l11.8 11.7 84-83.8 84.4 84.2 11.8-11.7L107.6 96 192 11.8z"/></svg>`,
     action: ACTION_UPDATE_OPERATOR,
     args: {
       operator: '*',
@@ -204,7 +203,8 @@ const buttons = [
   {
     id: '-',
     className: 'is-subtraction',
-    text: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><title>ionicons-v5-e</title><line x1="400" y1="256" x2="112" y2="256" style="fill:rgba(255,255,255,0.9);stroke:rgba(255,255,255,0.9);stroke-linecap:round;stroke-linejoin:round;stroke-width:32px"/></svg>`,
+    text: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 17"><path d="M256 17H0V0h256v17z"/></svg>
+`,
     action: ACTION_UPDATE_OPERATOR,
     args: {
       operator: '-',
@@ -250,7 +250,7 @@ const buttons = [
     id: '+',
     text: '',
     className: 'is-addition',
-    text: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path style="fill: rgba(255,255,255,0.9);stroke: rgba(255,255,255,0.9)" d="M368.5 240H272v-96.5c0-8.8-7.2-16-16-16s-16 7.2-16 16V240h-96.5c-8.8 0-16 7.2-16 16 0 4.4 1.8 8.4 4.7 11.3 2.9 2.9 6.9 4.7 11.3 4.7H240v96.5c0 4.4 1.8 8.4 4.7 11.3 2.9 2.9 6.9 4.7 11.3 4.7 8.8 0 16-7.2 16-16V272h96.5c8.8 0 16-7.2 16-16s-7.2-16-16-16z"/></svg>`,
+    text: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><path d="M256 137H136v119h-17V137H0v-17h119V0h17v120h120v17z"/></svg>`,
     action: ACTION_UPDATE_OPERATOR,
     args: {
       operator: '+',
@@ -344,9 +344,7 @@ export default {
     defaultFormula: {
       type: Array,
       default: () => [],
-  },
-  mounted() {
-    window.addEventListener('keydown', this.onKeyDown)
+    },
   },
   data() {
     return {
@@ -411,6 +409,9 @@ export default {
       return { size, weight }
     },
   },
+  mounted() {
+    window.addEventListener('keydown', this.onKeyDown)
+  },
   methods: {
     onKeyDown(e) {
       if (event.defaultPrevented) {
@@ -423,7 +424,12 @@ export default {
 
           if (e[key] === value) {
             this.exec(command.action, command.args)
-            this.$emit('key', { key: e.key, args: ...command.args })
+            this.$emit('key', {
+              key: e.key,
+              args: {
+                ...command.args,
+              },
+            })
           }
         })
       })
@@ -872,8 +878,6 @@ html {
   right: -18px;
   top: 0;
   bottom: 0;
-  /* width: 100%; */
-  /* height: 100%; */
 }
 
 .Calculator-button {
@@ -910,6 +914,14 @@ html {
   display: block;
 }
 
+.Calculator-button svg {
+  fill: currentColor;
+  left: 50%;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
 .Calculator-button.is-negation,
 .Calculator-button.is-modulo {
   font-size: 18px;
@@ -924,15 +936,15 @@ html {
 }
 
 .Calculator-button.is-multiplication svg {
-  width: 20px;
+  width: 11px;
 }
 
 .Calculator-button.is-addition svg {
-  width: 20px;
+  width: 13px;
 }
 
 .Calculator-button.is-subtraction svg {
-  width: 20px;
+  width: 14px;
 }
 
 .Calculator-button.is-paren {
