@@ -1,5 +1,5 @@
 <template>
-  <div class="CalculatorBackground">
+  <div>
     <noscript>
       <link
         href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,300,400&display=swap"
@@ -752,6 +752,7 @@ html {
   box-sizing: inherit;
 }
 
+/*
 .CalculatorBackground {
   background-size: cover;
   background-repeat: no-repeat;
@@ -767,7 +768,7 @@ html {
     #625a51 100%
   );
   min-height: 100vh;
-}
+} */
 
 .Calculator {
   box-shadow: 12px 18px 45px 0 rgba(0, 0, 0, 0.25);
@@ -915,11 +916,15 @@ html {
 }
 
 .Calculator-button svg {
-  fill: currentColor;
   left: 50%;
   position: absolute;
   top: 50%;
   transform: translate(-50%, -50%);
+}
+
+.Calculator-button svg,
+.Calculator-button path {
+  fill: rgba(255, 255, 255, 1);
 }
 
 .Calculator-button.is-negation,
