@@ -1,7 +1,7 @@
 import { shallowMount } from '@vue/test-utils'
-import Calculator from '@/calculator.vue'
+import Calculator from '../../build/calculator.umd'
 
-describe('calculator.vue', () => {
+describe('Build', () => {
   it('at least does simple math', () => {
     const wrapper = shallowMount(Calculator)
 

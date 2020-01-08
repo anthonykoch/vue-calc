@@ -1,9 +1,5 @@
 'use strict'
 
-/**
- * LEXER AND PARSER for mathematical expressions. The lexer is hand written with influences from Stylus's lexer, but the parser was mostly taken from elsewhere, which is listed in the description for the Parser constructor.
- */
-
 export const TYPE_NUMBER_LITERAL = 'NUMBER_LITERAL'
 
 /**

@@ -1,5 +1,12 @@
 # Calculator
 
+## Polyfills
+
+Uses:
+
+- Object.assign
+
+
 ## Props
 
 - **default-formula**
@@ -19,7 +26,7 @@ When the user backspaces.
 
 When the user clears the formula.
 
-#### clearEntry
+#### clear-entry
 
 When the user presses clear entry.
 
