@@ -9,11 +9,23 @@ Uses:
 
 ## Props
 
+These props are experimental and will probably break.
+
 - **default-formula**
 
 Type: `Array`
 
+Example:
+
 `:default-formula="['23', '+', '2']"`
+
+
+- **default-operand**
+
+Type: `String|Number`
+Example:
+
+`:default-operand="147"`
 
 
 ## Events
@@ -74,6 +86,8 @@ onKeyDown({ key ) {
 ```
 
 ## Building
+
+For some reason, it only builds properly through unix based terminals
 
 ```
 npm run build
