@@ -33,7 +33,7 @@
           <button
             v-for="button in buttons"
             :key="button.id"
-            :data-id="button.id"
+            :data-key="button.id"
             :class="button.className"
             class="Calculator-button"
             @click="exec(button.action, button.args)"
@@ -57,7 +57,7 @@
 <script>
 import evalmath, { isOperator } from './math'
 
-const keyboardNumbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+const keyboardNumbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 const keyboardOperators = ['*', '+', '-', '/']
 
 const ACTION_CLEAR = 'clear'
@@ -203,8 +203,7 @@ const buttons = [
   {
     id: '-',
     className: 'is-subtraction',
-    text: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 17"><path d="M256 17H0V0h256v17z"/></svg>
-`,
+    text: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 17"><path d="M256 17H0V0h256v17z"/></svg>`,
     action: ACTION_UPDATE_OPERATOR,
     args: {
       operator: '-',
@@ -330,7 +329,7 @@ const defaultCommands = [
     },
     action: ACTION_UPDATE_OPERATOR,
     args: {
-      value: n,
+      operator: n,
     },
   })),
 ]
@@ -339,11 +338,24 @@ export default {
   props: {
     commands: {
       type: Array,
-      default: () => defaultCommands,
+      default: () => Object.freeze(defaultCommands),
     },
     defaultFormula: {
       type: Array,
       default: () => [],
+
+    },
+    defaultOperand: {
+      type: String,
+      default: () => '',
+    },
+    defaultOperator: {
+      type: String,
+      default: () => '',
+    },
+    defaultMode: {
+      type: Number,
+      default: () => MODE_SHOW_TOTAL|MODE_INSERT_OPERAND
     },
   },
   data() {
@@ -352,14 +364,14 @@ export default {
       MODE_INSERT_OPERAND,
       MODE_APPEND_OPERAND,
       activeButtons: [],
-      expressions: this.$props.defaultFormula.slice(0),
-      buttons,
-      currentOperand: '147',
-      currentOperator: '-',
-      mode: MODE_SHOW_TOTAL | MODE_INSERT_OPERAND,
+      expressions: this.defaultFormula.slice(0),
+      buttons: Object.freeze({ ...buttons }),
+      currentOperand: String(this.defaultOperand),
+      currentOperator: this.defaultFormula,
+      mode: this.defaultMode,
       openParenStack: 0,
       error: null,
-      total: 147,
+      total: 0,
     }
   },
   computed: {
@@ -414,13 +426,15 @@ export default {
   },
   methods: {
     onKeyDown(e) {
-      if (event.defaultPrevented) {
+      if (e.defaultPrevented) {
         return
       }
+      console.log(e.key)
 
       this.commands.forEach(command => {
         Object.keys(command.match).map(key => {
           const value = command.match[key]
+          console.log(e[key], value)
 
           if (e[key] === value) {
             this.exec(command.action, command.args)
@@ -438,7 +452,7 @@ export default {
       this.showTotal({ explicit: true })
     },
     exec(action, args) {
-      console.log(action)
+      // console.log(action, args)
 
       switch (action) {
         case ACTION_BACKSPACE: {
@@ -462,19 +476,24 @@ export default {
           break
         }
         case ACTION_UPDATE_OPERATOR: {
-          this.updateOperator(args)
-          this.$emit('operator-update')
+          this.updateOperator(args.operator)
+          this.$emit('operator-update', args.operator)
           break
         }
         case ACTION_APPEND_OPERAND: {
-          this.appendOperand(args)
-          this.$emit('operand-append')
+          this.appendOperand(args.value)
+          this.$emit('operand-append', args)
           break
         }
         case ACTION_ADD_PAREN: {
-          this.addParen(args)
-          this.$emit('paren-add')
+          this.addParen(args.value)
+          this.$emit('paren-add', args)
           break
+        }
+        case ACTION_SHOW_TOTAL: {
+          const total = this.showTotal({ explicit: true })
+          this.$emit('update:total-explicit', { total })
+          break;
         }
         default: {
           if (process.env.NODE_ENV === 'development') {
@@ -514,11 +533,9 @@ export default {
       if (this.currentOperand !== 0) {
         this.currentOperand = (-this.currentOperand).toString()
       }
-
-      // console.log(this.currentOperand)
     },
 
-    updateOperator({ operator }) {
+    updateOperator(operator) {
       const length = this.expressions.length
       const last = this.expressions[length - 1] || ''
       const { mode, currentOperand } = this
@@ -527,13 +544,12 @@ export default {
         // console.log('MODE_INSERT_OPERAND')
 
         if (length === 0) {
-          this.expressions.push(currentOperand, operator)
+          // TODO: Add regression test for adding an operand after reset state
+          this.expressions.push(currentOperand || '0', operator)
         } else if (isOperator(last)) {
-          // console.log('isoplast');                            // APPEND_OP LOG
           this.expressions.pop()
           this.expressions.push(operator)
         } else if (last === ')') {
-          // console.log('nope');                                // APPEND_OP LOG
           this.expressions.push(operator)
         } else if (last === '(') {
           this.expressions.push(currentOperand, operator)
@@ -558,41 +574,41 @@ export default {
       // console.log('UPDATE_OPERATOR:', this.expressions)
     },
 
-    addParen({ operator }) {
+    addParen(paren) {
       const last = this.expressions[this.expressions.length - 1] || ''
       const { currentOperand, openParenStack } = this
 
-      // console.log('ADD_PAREN:', {last, operator});
+      // console.log('ADD_PAREN:', {last, paren});
 
-      if (operator === ')' && openParenStack === 0) {
+      if (paren === ')' && openParenStack === 0) {
         // No need to add closing paren if there is no open paren
         return
-      } else if (operator === '(' && last === ')') {
+      } else if (paren === '(' && last === ')') {
         // FIXME: Look at real calculator for semantics
         return
       }
 
-      if (last === '(' && operator === ')') {
+      if (last === '(' && paren === ')') {
         // Handle immediate closed parens
-        this.expressions.push(currentOperand, operator)
-      } else if (isOperator(last) && operator === ')') {
+        this.expressions.push(currentOperand, paren)
+      } else if (isOperator(last) && paren === ')') {
         // Automatically append current operand when expressions
         // is "(5 *" so result is "(5 * 5)"
-        this.expressions.push(currentOperand, operator)
-      } else if ((isOperator(last) || length === 0) && operator === '(') {
+        this.expressions.push(currentOperand, paren)
+      } else if ((isOperator(last) || length === 0) && paren === '(') {
         // Handle "5 *" where the result is "5 * (" and "(" is the beginning
         // of a new group expression
-        this.expressions.push(operator)
+        this.expressions.push(paren)
       }
 
-      if (operator === '(') {
+      if (paren === '(') {
         this.openParenStack++
-      } else if (operator === ')') {
+      } else if (paren === ')') {
         this.openParenStack--
       }
     },
 
-    appendOperand({ value, operator }) {
+    appendOperand(value) {
       const currentOperand = this.currentOperand
       let newOperand = currentOperand
       let newMode
@@ -688,7 +704,7 @@ export default {
         if (explicit) {
           this.clear()
           this.error = err
-          console.log(err)
+          // console.log(err)
           this.$emit('formula-error', err)
         }
       }
