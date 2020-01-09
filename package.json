@@ -3,12 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "npm run build:umd & npm run build:es & npm run build:unpkg",
-    "test": "vue-cli-service test:unit",
+    "build": "rollup --config rollup.config.js",
     "build:es": "rollup --config rollup.config.js --format es --file build/calculator.esm.js",
     "build:umd": "rollup --config rollup.config.js --format umd --file build/calculator.umd.js",
     "build:unpkg": "rollup --config rollup.config.js --format iife --file build/calculator.min.js",
-    "dev": "vue serve src/calculator.vue"
+    "dev": "vue serve src/calculator.vue",
+    "lint": "prettier --check \"*.js\"",
+    "test": "cypress run --spec integration/calculator.spec.js"
   },
   "main": "build/calculator.umd.js",
   "module": "build/calculator.esm.js",
@@ -17,8 +18,12 @@
   },
   "unpkg": "build/calculator.min.js",
   "dependencies": {
+    "@vue/cli": "^4.1.2",
+    "@vue/cli-service-global": "^4.1.2",
+    "cypress": "^3.8.1",
     "vue": "^2.6.10",
-    "vue-runtime-helpers": "^1.1.2"
+    "vue-runtime-helpers": "^1.1.2",
+    "wait-on": "^3.3.0"
   },
   "devDependencies": {
     "core-js": "^3.4.4",
@@ -34,19 +39,10 @@
     "@vue/test-utils": "1.0.0-beta.29",
     "eslint": "^6.8.0",
     "eslint-plugin-vue": "^6.1.2",
-    "rollup": "^1.17.0",
+    "rollup": "^1.28.0",
     "rollup-plugin-commonjs": "^10.0.1",
     "rollup-plugin-vue": "^5.0.1",
     "vue": "^2.6.10",
     "vue-template-compiler": "^2.6.10"
-  },
-  "gitHooks": {
-    "pre-commit": "lint-staged"
-  },
-  "lint-staged": {
-    "*.{js,vue}": [
-      "vue-cli-service lint",
-      "git add"
-    ]
   }
 }
