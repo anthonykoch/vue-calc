@@ -1,11 +1,11 @@
 <template>
   <div>
-    <noscript>
+    <!-- <noscript>
       <link
         href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,300,400&display=swap"
         rel="stylesheet"
       />
-    </noscript>
+    </noscript> -->
     <div class="Calculator">
       <header class="Calculator-header">
         <div class="Calculator-formula" data-formula>
@@ -58,7 +58,7 @@
 import evalmath, { isOperator } from './math'
 
 const keyboardNumbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-const keyboardOperators = ['*', '+', '-', '/', '(', ')']
+const keyboardOperators = ['*', '+', '-', '/']
 
 const ACTION_CLEAR = 'clear'
 const ACTION_CLEAR_ENTRY = 'clearEntry'
@@ -314,6 +314,24 @@ const defaultCommands = [
     },
     action: ACTION_CLEAR_ENTRY,
   },
+  {
+    match: {
+      key: '(',
+    },
+    args: {
+      operator: '(',
+    },
+    action: ACTION_ADD_PAREN,
+  },
+  {
+    match: {
+      key: ')',
+    },
+    args: {
+      operator: ')',
+    },
+    action: ACTION_ADD_PAREN,
+  },
   ...keyboardNumbers.map(n => ({
     match: {
       key: n,
@@ -429,12 +447,10 @@ export default {
       if (e.defaultPrevented) {
         return
       }
-      console.log(e.key)
 
       this.commands.forEach(command => {
         Object.keys(command.match).map(key => {
           const value = command.match[key]
-          console.log(e[key], value)
 
           if (e[key] === value) {
             this.exec(command.action, command.args)
