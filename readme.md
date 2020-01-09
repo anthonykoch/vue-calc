@@ -1,5 +1,28 @@
 # Calculator
 
+## Font
+
+The font used default font is Source Sans Pro, but you have to include it yourself. If I remember correctly, overriding styles would be something like this (in a non-scoped style tag):
+
+```
+<template>
+  <div class="wrapper">
+    <vue-calc></vue-calc>
+  </div>
+</template>
+<style scoped>
+  .main {
+    color: red;
+  }
+</style>
+<style>
+.wrapper .Calculator {
+  font-family: 'your-preferred-font';
+}
+</style>
+```
+
+
 ## Polyfills
 
 Uses:

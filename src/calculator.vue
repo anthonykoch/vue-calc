@@ -919,7 +919,7 @@ html {
   color: rgba(255, 255, 255, 0.8);
   cursor: pointer;
   display: flex;
-  font-family: Source Sans Pro;
+  font-family: inherit;
   font-size: 22px;
   font-weight: 300;
   justify-content: center;

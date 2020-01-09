@@ -9,7 +9,7 @@
     "build:unpkg": "rollup --config rollup.config.js --format iife --file build/calculator.min.js",
     "dev": "vue serve src/calculator.vue",
     "lint": "prettier --check \"*.js\"",
-    "test": "cypress run --spec integration/calculator.spec.js"
+    "test": "cypress run --spec cypress/integration/*.spec.js"
   },
   "main": "build/calculator.umd.js",
   "module": "build/calculator.esm.js",
