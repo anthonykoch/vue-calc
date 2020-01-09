@@ -7,7 +7,8 @@
     "build:es": "rollup --config rollup.config.js --format es --file build/calculator.esm.js",
     "build:umd": "rollup --config rollup.config.js --format umd --file build/calculator.umd.js",
     "build:unpkg": "rollup --config rollup.config.js --format iife --file build/calculator.min.js",
-    "dev": "vue serve src/calculator.vue"
+    "dev": "vue serve src/calculator.vue",
+    "lint": "prettier --check \"*.js\""
   },
   "main": "build/calculator.umd.js",
   "module": "build/calculator.esm.js",
@@ -17,6 +18,7 @@
   "unpkg": "build/calculator.min.js",
   "dependencies": {
     "@vue/cli": "^4.1.2",
+    "@vue/cli-service-global": "^4.1.2",
     "cypress": "^3.8.1",
     "vue": "^2.6.10",
     "vue-runtime-helpers": "^1.1.2",
@@ -41,14 +43,5 @@
     "rollup-plugin-vue": "^5.0.1",
     "vue": "^2.6.10",
     "vue-template-compiler": "^2.6.10"
-  },
-  "gitHooks": {
-    "pre-commit": "lint-staged"
-  },
-  "lint-staged": {
-    "*.{js,vue}": [
-      "vue-cli-service lint",
-      "git add"
-    ]
   }
 }
