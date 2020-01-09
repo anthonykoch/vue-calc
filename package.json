@@ -16,6 +16,7 @@
   },
   "unpkg": "build/calculator.min.js",
   "dependencies": {
+    "@vue/cli": "^4.1.2",
     "cypress": "^3.8.1",
     "vue": "^2.6.10",
     "vue-runtime-helpers": "^1.1.2",
