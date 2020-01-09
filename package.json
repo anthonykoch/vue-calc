@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "test": "vue-cli-service test:unit",
     "build": "rollup --config rollup.config.js",
     "build:es": "rollup --config rollup.config.js --format es --file build/calculator.esm.js",
     "build:umd": "rollup --config rollup.config.js --format umd --file build/calculator.umd.js",

@@ -104,9 +104,6 @@ vue serve src/calculator.vue
 ## Running tests
 
 ```
-npm test
-# You muse have the server running at the same time!
-
 npx cypress run --spec cypress/*.spec.js
 
 # or through the UI
