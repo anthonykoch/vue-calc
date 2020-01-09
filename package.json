@@ -7,7 +7,7 @@
     "build:es": "rollup --config rollup.config.js --format es --file build/calculator.esm.js",
     "build:umd": "rollup --config rollup.config.js --format umd --file build/calculator.umd.js",
     "build:unpkg": "rollup --config rollup.config.js --format iife --file build/calculator.min.js",
-    "dev": "vue serve src/calculator.vue"
+    "dev": "npx vue serve src/calculator.vue"
   },
   "main": "build/calculator.umd.js",
   "module": "build/calculator.esm.js",
