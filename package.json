@@ -19,7 +19,8 @@
   "dependencies": {
     "cypress": "^3.8.1",
     "vue": "^2.6.10",
-    "vue-runtime-helpers": "^1.1.2"
+    "vue-runtime-helpers": "^1.1.2",
+    "wait-on": "^3.3.0"
   },
   "devDependencies": {
     "core-js": "^3.4.4",

@@ -58,7 +58,7 @@
 import evalmath, { isOperator } from './math'
 
 const keyboardNumbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-const keyboardOperators = ['*', '+', '-', '/']
+const keyboardOperators = ['*', '+', '-', '/', '(', ')']
 
 const ACTION_CLEAR = 'clear'
 const ACTION_CLEAR_ENTRY = 'clearEntry'
@@ -486,7 +486,7 @@ export default {
           break
         }
         case ACTION_ADD_PAREN: {
-          this.addParen(args.value)
+          this.addParen(args.operator)
           this.$emit('paren-add', args)
           break
         }

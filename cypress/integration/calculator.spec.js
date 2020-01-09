@@ -94,7 +94,5 @@ context('calculator.vue', () => {
       })
   })
 
-  it.skip('erases character on backspace', () => {
-
-  })
+  it('erases character on backspace', () => {})
 })
