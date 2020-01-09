@@ -1,5 +1,9 @@
 # Calculator
 
+Basically this as a component https://codepen.io/anthonykoch/pen/xVQOwb
+
+This isn't on NPM for a reason, it's a calculator I built very early on in my programming career. It's likely broken in some area, but someone asked to make it a standalone component, so here it is.
+
 ## Font
 
 The font used default font is Source Sans Pro, but you have to include it yourself. If I remember correctly, overriding styles would be something like this (in a non-scoped style tag):
